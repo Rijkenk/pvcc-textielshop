@@ -388,7 +388,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem}
           <button type="button" class="seg is-on" data-side="front" role="tab" aria-selected="true">Voorkant</button>
           <button type="button" class="seg" data-side="back" role="tab" aria-selected="false">Achterkant</button>
         </div>
-        <canvas id="shirtCanvas" tabindex="0" width="600" height="771" aria-label="Voorbeeld van je shirt"></canvas>
+        <canvas id="shirtCanvas" tabindex="0" width="1200" height="1542" aria-label="Voorbeeld van je shirt"></canvas>
         <p class="cfg-hint">Klik op je tekst of logo om het te selecteren en sleep het naar de goede plek. Met het gele hoekje (of je scrollwiel) maak je het groter of kleiner, met Delete verwijder je het.</p>
         <button type="button" class="btn btn-ghost btn-sm" id="downloadPng">Voorbeeld downloaden</button>
       </div>
@@ -557,7 +557,7 @@ const PRINT_COLORS = [
 const SIZES = ["S","M","L","XL","XXL","3XL","4XL","5XL"], BIG = ["4XL","5XL"];
 
 const cv = document.getElementById("shirtCanvas");
-const ctx = cv.getContext("2d");
+const ctx = cv.getContext("2d"); ctx.imageSmoothingQuality = "high";
 const W = 600, H = 771, K = 600/420;      // raster = pixels van de productfoto (420×540)
 const UNIT_PER_CM = 240 / 54;             // romp op de foto ≈ 240 px ≈ 54 cm (maat L)
 const AREA = {front:{x:130,y:95,w:160,h:250}, back:{x:130,y:80,w:160,h:270}};
@@ -607,6 +607,13 @@ function itemBox(c, it){ // breedte/hoogte in rastereenheden
 function inkImage(it, color){ // logo als silhouet in de opdrukkleur
   const key = color.hex;
   if(it.cache && it.cache.key === key) return it.cache.cv;
+  if(it.flex){ // vectorlogo: scherp op hoge resolutie inkleuren, randen blijven glad
+    const o = document.createElement("canvas"), r = it.img.width / it.img.height;
+    o.width = 1600; o.height = Math.round(1600 / r);
+    const oc = o.getContext("2d"); oc.drawImage(it.img, 0, 0, o.width, o.height);
+    oc.globalCompositeOperation = "source-in"; oc.fillStyle = color.hex; oc.fillRect(0, 0, o.width, o.height);
+    it.cache = {key, cv:o}; return o;
+  }
   const o = document.createElement("canvas"); o.width = it.img.width; o.height = it.img.height;
   const oc = o.getContext("2d"); oc.drawImage(it.img, 0, 0);
   const d = oc.getImageData(0, 0, o.width, o.height), p = d.data;
@@ -652,8 +659,8 @@ function drawItems(c, side, showUi){
   }
   c.restore();
 }
-function render(){
-  ctx.clearRect(0,0,W,H);
+function render(){ // canvas is 2x zo groot voor scherpe weergave
+  ctx.setTransform(2,0,0,2,0,0); ctx.clearRect(0,0,W,H);
   drawShirt(ctx, st.side, st.shirt);
   drawItems(ctx, st.side, true);
 }
