@@ -638,7 +638,7 @@ function drawItems(c, side, showUi){
       c.font = `600 ${Math.max(5, bx.h*.14)}px Inter, sans-serif`; c.fillText("." + it.ext.toUpperCase(), x, y + bx.h*.18);
       c.restore();
     }
-    else if(it.type === "logo") c.drawImage(it.img, x - bx.w/2, y - bx.h/2, bx.w, bx.h); // logo in eigen kleuren
+    else if(it.type === "logo") c.drawImage(it.flex ? inkImage(it, st.print) : it.img, x - bx.w/2, y - bx.h/2, bx.w, bx.h); // flex in opdrukkleur, andere logo's in eigen kleuren
     else { c.fillStyle = st.print.hex; c.font = fontCss(it, bx.fs); c.textAlign = "center"; c.textBaseline = "middle"; bx.lines.forEach((l, n) => c.fillText(l, x, y + bx.fs*.04 + (n - (bx.lines.length - 1)/2) * bx.fs * 1.15)); }
     if(showUi && it === st.sel){
       c.strokeStyle = "#FFD200"; c.lineWidth = 1.2; c.setLineDash([4,2]);
@@ -670,7 +670,8 @@ function hit(pt){
 let drag = null;
 const center = it => ({x: AREA[st.side].x + it.cx*AREA[st.side].w, y: AREA[st.side].y + it.cy*AREA[st.side].h});
 // logo's gaan via de OKI-printer: maximaal A4 (21 x 29,7 cm)
-function maxCm(it){ if(it.type !== "logo") return 30; const r = it.img.width / it.img.height; return Math.floor(Math.min(21, 29.7 * r) * 2) / 2; }
+function maxCm(it){ if(it.type !== "logo" || it.flex) return 30; // flex (zoals het PVCC-logo) is niet aan A4 gebonden
+  const r = it.img.width / it.img.height; return Math.floor(Math.min(21, 29.7 * r) * 2) / 2; }
 function setCm(it, cm){ const mx = maxCm(it); it.cm = Math.round(Math.min(mx, Math.max(3, cm)) * 2) / 2;
   $("sizeRange").value = it.cm; $("sizeOut").textContent = it.cm + " cm" + (it.type === "logo" && it.cm >= mx ? " (max. A4)" : ""); render();
   const ar = AREA[st.side], b = it._box; if(b){ const mx = Math.min(.5, b.w/2/ar.w), my = Math.min(.5, b.h/2/ar.h);
@@ -865,11 +866,11 @@ swatches($("shirtColors"), SHIRT_COLORS, "shirt");
 swatches($("printColors"), PRINT_COLORS, "print");
 buildSizes();
 (async () => {
-  const start = {type:"text", text:"Jouw tekst", font:"Archivo Black", cm:20, cx:.5, cy:.62, placeholder:true};
+  const start = {type:"text", text:"Jouw tekst", font:"Archivo Black", cm:20, cx:.5, cy:.76, placeholder:true};
   // standaard voorbeeld: PVCC-logo boven "Jouw tekst" (verdwijnt zodra de klant iets toevoegt)
   const logoSrc = document.querySelector('image[href^="data:image/svg"]')?.getAttribute("href");
   if(logoSrc){ const img = new Image(); img.src = logoSrc;
-    try { await img.decode(); st.items.front.push({type:"logo", name:"PVCC-logo", ext:"svg", img, cm:14, cx:.5, cy:.3, placeholder:true}); } catch(e){} }
+    try { await img.decode(); st.items.front.push({type:"logo", name:"PVCC-logo", ext:"svg", img, cm:30, cx:.5, cy:.3, flex:true, placeholder:true}); } catch(e){} }
   await Promise.all(["Archivo Black","Anton","Pacifico"].map(n => document.fonts.load(`40px "${n}"`)).concat(document.fonts.load('700 40px "Playfair Display"'))).catch(()=>{});
   st.items.front.push(start); select(start); updatePrice();
 })();
