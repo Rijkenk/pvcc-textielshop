@@ -307,7 +307,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem}
       <tbody>
         <tr><td>T-shirt blanco</td><td class="num">€10</td></tr>
         <tr><td>Klein logo, tot 15 cm (per opdruk)</td><td class="num">€5</td></tr>
-        <tr><td>Groot logo, tot 30 cm (per opdruk)</td><td class="num">€10</td></tr>
+        <tr><td>Groot logo, tot 35 cm (per opdruk)</td><td class="num">€10</td></tr>
         <tr><td>Mokken, caps, tassen en andere producten</td><td class="num">op aanvraag</td></tr>
       </tbody>
     </table>
@@ -439,7 +439,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem}
               </select>
             </label>
             <label>Breedte <output id="sizeOut">20 cm</output>
-              <input type="range" id="sizeRange" min="4" max="30" step="1" value="20">
+              <input type="range" id="sizeRange" min="4" max="35" step="1" value="20">
             </label>
             <div class="row-btns">
               <button type="button" class="link-btn" id="centerItem">Centreren</button>
@@ -511,7 +511,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem}
 
 <script>
 // Shirtconfigurator. Prijzen uit PVCC_Textielshop_Kostprijs.xlsx (incl. btw):
-// shirt €10, klein logo (≤15 cm) €5, groot logo (≤30 cm) €10 per kant;
+// shirt €10, klein logo (≤15 cm) €5, groot logo (≤35 cm flex, max A4 full colour) €10 per kant;
 // borst + rug: 1–9 st. €25, 10–24 st. €20, 25+ st. €16.
 const EMAIL = "textielshop@pvcc.nl";
 // Artikelen met eigen PVCC-artikelnummer (nieuwe shirts krijgen het volgende nummer: PVCC-T002, ...)
@@ -677,10 +677,10 @@ function hit(pt){
 let drag = null;
 const center = it => ({x: AREA[st.side].x + it.cx*AREA[st.side].w, y: AREA[st.side].y + it.cy*AREA[st.side].h});
 // logo's gaan via de OKI-printer: maximaal A4 (21 x 29,7 cm)
-function maxCm(it){ if(it.type !== "logo" || it.flex) return 30; // flex (zoals het PVCC-logo) is niet aan A4 gebonden
+function maxCm(it){ if(it.type !== "logo" || it.flex) return 35; // flex (tekst en het PVCC-logo): max 35 cm breed // flex (zoals het PVCC-logo) is niet aan A4 gebonden
   const r = it.img.width / it.img.height; return Math.floor(Math.min(21, 29.7 * r) * 2) / 2; }
 function setCm(it, cm){ const mx = maxCm(it); it.cm = Math.round(Math.min(mx, Math.max(3, cm)) * 2) / 2;
-  $("sizeRange").value = it.cm; $("sizeOut").textContent = it.cm + " cm" + (it.type === "logo" && it.cm >= mx ? " (max. A4)" : ""); render();
+  $("sizeRange").value = it.cm; $("sizeOut").textContent = it.cm + " cm" + (it.type === "logo" && it.cm >= mx ? (it.flex ? " (max.)" : " (max. A4)") : ""); render();
   const ar = AREA[st.side], b = it._box; if(b){ const mx = Math.min(.5, b.w/2/ar.w), my = Math.min(.5, b.h/2/ar.h);
     it.cx = Math.min(1-mx, Math.max(mx, it.cx)); it.cy = Math.min(1-my, Math.max(my, it.cy)); render(); }
   updatePrice(); }
@@ -737,7 +737,7 @@ function select(it){
     $("textField").hidden = !isText; $("fontField").hidden = !isText;
     if(isText){ $("textInput").value = it.text; $("fontSelect").value = it.font; }
     const mx = maxCm(it); if(it.cm > mx) it.cm = mx;
-    $("sizeRange").max = mx; $("sizeRange").value = it.cm; $("sizeOut").textContent = it.cm + " cm" + (it.type === "logo" && it.cm >= mx ? " (max. A4)" : "");
+    $("sizeRange").max = mx; $("sizeRange").value = it.cm; $("sizeOut").textContent = it.cm + " cm" + (it.type === "logo" && it.cm >= mx ? (it.flex ? " (max.)" : " (max. A4)") : "");
   }
   render(); updatePrice();
 }
@@ -824,7 +824,7 @@ function updatePrice(){
   const p = calc();
   $("unitPrice").textContent = eur(p.unit); $("qtyTotal").textContent = p.qty; $("totalPrice").textContent = eur(p.total);
   const fullColour = ["front","back"].some(s => st.items[s].some(i => i.type === "logo" && !i.placeholder));
-  $("priceExplain").textContent = p.how + ". Klein = tot 15 cm, groot = tot 30 cm." + (fullColour ? " Let op: dit is de prijs voor een opdruk in één kleur. Voor een logo in full colour geldt een andere prijs, die krijg je van ons na controle van je bestand." : "");
+  $("priceExplain").textContent = p.how + ". Klein = tot 15 cm, groot = tot 35 cm (full colour max. A4)." + (fullColour ? " Let op: dit is de prijs voor een opdruk in één kleur. Voor een logo in full colour geldt een andere prijs, die krijg je van ons na controle van je bestand." : "");
   let tip = "";
   if(p.f && p.b && p.qty < 10) tip = `Nog ${10-p.qty} shirt${10-p.qty>1?"s":""} erbij en je betaalt €20 per stuk.`;
   else if(p.f && p.b && p.qty < 25) tip = `Bij 25 stuks betaal je maar €16 per shirt (nog ${25-p.qty} erbij).`;
@@ -873,11 +873,11 @@ swatches($("shirtColors"), SHIRT_COLORS, "shirt");
 swatches($("printColors"), PRINT_COLORS, "print");
 buildSizes();
 (async () => {
-  const start = {type:"text", text:"Jouw tekst", font:"Archivo Black", cm:20, cx:.5, cy:.76, placeholder:true};
+  const start = {type:"text", text:"Jouw tekst", font:"Archivo Black", cm:20, cx:.5, cy:.8, placeholder:true};
   // standaard voorbeeld: PVCC-logo boven "Jouw tekst" (verdwijnt zodra de klant iets toevoegt)
   const logoSrc = document.querySelector('image[href^="data:image/svg"]')?.getAttribute("href");
   if(logoSrc){ const img = new Image(); img.src = logoSrc;
-    try { await img.decode(); st.items.front.push({type:"logo", name:"PVCC-logo", ext:"svg", img, cm:30, cx:.5, cy:.3, flex:true, placeholder:true}); } catch(e){} }
+    try { await img.decode(); st.items.front.push({type:"logo", name:"PVCC-logo", ext:"svg", img, cm:35, cx:.5, cy:.34, flex:true, placeholder:true}); } catch(e){} }
   await Promise.all(["Archivo Black","Anton","Pacifico"].map(n => document.fonts.load(`40px "${n}"`)).concat(document.fonts.load('700 40px "Playfair Display"'))).catch(()=>{});
   st.items.front.push(start); select(start); updatePrice();
 })();
