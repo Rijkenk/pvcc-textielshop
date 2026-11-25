@@ -865,7 +865,11 @@ swatches($("shirtColors"), SHIRT_COLORS, "shirt");
 swatches($("printColors"), PRINT_COLORS, "print");
 buildSizes();
 (async () => {
-  const start = {type:"text", text:"Jouw tekst", font:"Archivo Black", cm:20, cx:.5, cy:.3, placeholder:true};
+  const start = {type:"text", text:"Jouw tekst", font:"Archivo Black", cm:20, cx:.5, cy:.62, placeholder:true};
+  // standaard voorbeeld: PVCC-logo boven "Jouw tekst" (verdwijnt zodra de klant iets toevoegt)
+  const logoSrc = document.querySelector('image[href^="data:image/svg"]')?.getAttribute("href");
+  if(logoSrc){ const img = new Image(); img.src = logoSrc;
+    try { await img.decode(); st.items.front.push({type:"logo", name:"PVCC-logo", ext:"svg", img, cm:14, cx:.5, cy:.3, placeholder:true}); } catch(e){} }
   await Promise.all(["Archivo Black","Anton","Pacifico"].map(n => document.fonts.load(`40px "${n}"`)).concat(document.fonts.load('700 40px "Playfair Display"'))).catch(()=>{});
   st.items.front.push(start); select(start); updatePrice();
 })();
