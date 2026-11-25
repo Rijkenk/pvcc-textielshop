@@ -604,12 +604,26 @@ function itemBox(c, it){ // breedte/hoogte in rastereenheden
   const fs = 100 * w / Math.max(mw, 1);
   return {w, h: fs * (1.05 + (lines.length - 1) * 1.15), fs, lines};
 }
+// Snijdt lege (transparante of witte) randen weg, zodat de breedte in cm over het logo zelf gaat
+function trimImage(img, width){
+  const w = width || img.naturalWidth || img.width, h = Math.round(w * (img.naturalHeight || img.height) / (img.naturalWidth || img.width));
+  const o = document.createElement("canvas"); o.width = w; o.height = h; const c = o.getContext("2d"); c.drawImage(img, 0, 0, w, h);
+  const p = c.getImageData(0, 0, w, h).data;
+  let transparent = false; for(let i = 3; i < p.length; i += 16){ if(p[i] < 200){ transparent = true; break; } }
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){ const i = (y*w + x)*4;
+    const ink = transparent ? p[i+3] > 20 : (p[i] < 240 || p[i+1] < 240 || p[i+2] < 240);
+    if(ink){ if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y; } }
+  if(x1 < 0) return o;
+  const t = document.createElement("canvas"); t.width = x1 - x0 + 1; t.height = y1 - y0 + 1;
+  t.getContext("2d").drawImage(o, x0, y0, t.width, t.height, 0, 0, t.width, t.height); return t;
+}
 function inkImage(it, color){ // logo als silhouet in de opdrukkleur
   const key = color.hex;
   if(it.cache && it.cache.key === key) return it.cache.cv;
   if(it.flex){ // vectorlogo: scherp op hoge resolutie inkleuren, randen blijven glad
     const o = document.createElement("canvas"), r = it.img.width / it.img.height;
-    o.width = 1600; o.height = Math.round(1600 / r);
+    o.width = it.img.width; o.height = it.img.height;
     const oc = o.getContext("2d"); oc.drawImage(it.img, 0, 0, o.width, o.height);
     oc.globalCompositeOperation = "source-in"; oc.fillStyle = color.hex; oc.fillRect(0, 0, o.width, o.height);
     it.cache = {key, cv:o}; return o;
@@ -774,7 +788,7 @@ $("logoInput").onchange = e => {
   rd.onload = () => { const img = new Image();
     img.onload = () => {
       const px = Math.max(img.naturalWidth, img.naturalHeight), ok = px >= MIN_PX;
-      const it = {...base, img, px:`${img.naturalWidth}×${img.naturalHeight} px`, check: ok ? "ok" : "te klein"};
+      const it = {...base, img: trimImage(img), px:`${img.naturalWidth}×${img.naturalHeight} px`, check: ok ? "ok" : "te klein"};
       dropPlaceholder(); st.items[st.side].push(it); select(it);
       if(ok) fileStatus("ok", `✓ <b>${f.name}</b> (${it.px}) voldoet. Tip: een EPS-bestand geeft het strakste resultaat.`);
       else fileStatus("warn", `⚠ <b>${f.name}</b> is maar ${it.px}. Dat is kleiner dan ${MIN_PX} pixels, dus de opdruk kan onscherp worden. Lever liever een groter bestand of een EPS aan, of mail ons voor advies.`);
@@ -877,7 +891,7 @@ buildSizes();
   // standaard voorbeeld: PVCC-logo boven "Jouw tekst" (verdwijnt zodra de klant iets toevoegt)
   const logoSrc = document.querySelector('image[href^="data:image/svg"]')?.getAttribute("href");
   if(logoSrc){ const img = new Image(); img.src = logoSrc;
-    try { await img.decode(); st.items.front.push({type:"logo", name:"PVCC-logo", ext:"svg", img, cm:35, cx:.5, cy:.34, flex:true, placeholder:true}); } catch(e){} }
+    try { await img.decode(); st.items.front.push({type:"logo", name:"PVCC-logo", ext:"svg", img: trimImage(img, 1600), cm:35, cx:.5, cy:.34, flex:true, placeholder:true}); } catch(e){} }
   await Promise.all(["Archivo Black","Anton","Pacifico"].map(n => document.fonts.load(`40px "${n}"`)).concat(document.fonts.load('700 40px "Playfair Display"'))).catch(()=>{});
   st.items.front.push(start); select(start); updatePrice();
 })();
