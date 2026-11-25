@@ -176,6 +176,8 @@ textarea{min-height:5rem;resize:vertical}
 #shirtCanvas.dragging{cursor:grabbing}
 #shirtCanvas:focus{outline:none}
 #shirtCanvas:focus-visible{outline:3px solid #161616;outline-offset:3px}
+/* desktop: shirtvoorbeeld past altijd in beeld, zodat het meescrollt met de opties rechts */
+@media (min-width:901px){#shirtCanvas{width:auto;max-width:100%;height:calc(100vh - 310px);max-height:668px;min-height:340px}}
 .cfg-views{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
 .seg{border:0;background:transparent;font:600 .92rem var(--f-body);color:var(--ink);padding:.45rem 1rem;border-radius:999px;cursor:pointer}
 .seg.is-on{background:#161616;color:#FFD200}
